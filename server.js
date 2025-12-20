@@ -94,6 +94,11 @@ app.get('/api/health', (req, res) => {
 
 // Serve the main page
 app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'index_osm.html'));
+});
+
+// Serve Google Maps version (optional)
+app.get('/google', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
 });
 

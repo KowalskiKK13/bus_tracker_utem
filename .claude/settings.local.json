@@ -12,7 +12,8 @@
       "Bash(curl:*)",
       "Bash(git init:*)",
       "Bash(git reset:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(npm install:*)"
     ],
     "deny": [],
     "ask": []
