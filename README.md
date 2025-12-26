@@ -13,7 +13,7 @@ Bus (Transmitter) → LoRa → Raspberry Pi Pico W (Receiver) → Server → Web
 - 🚌 Real-time bus location tracking on Google Maps
 - 📡 LoRa communication for long-range tracking
 - 📍 GPS coordinate display and route history
-- 📊 Signal strength and speed monitoring
+- 📊 Signal strength monitoring
 - 🔄 Automatic reconnection and error handling
 - 📱 Responsive web interface
 
@@ -58,12 +58,11 @@ Your Pico W should send HTTP POST requests to your server:
 import urequests
 import json
 
-def send_location(lat, lon, speed=0, signal=0):
+def send_location(lat, lon, signal=0):
     url = "http://your-server-ip:3000/api/bus-location"
     data = {
         "latitude": lat,
         "longitude": lon,
-        "speed": speed,
         "busId": "BUS001",
         "signalStrength": signal,
         "timestamp": utime.time()
@@ -84,9 +83,8 @@ If using a separate LoRa receiver, write GPS data to `bus_data.json`:
 
 ```json
 {
-    "latitude": 40.7128,
-    "longitude": -74.0060,
-    "speed": 45.5,
+    "latitude": 2.1896,
+    "longitude": 102.2501,
     "busId": "BUS001",
     "signalStrength": 85,
     "timestamp": "2023-12-07T10:30:00.000Z"
@@ -129,9 +127,8 @@ Expected data format for location updates:
 
 ```json
 {
-    "latitude": "40.7128",
-    "longitude": "-74.0060",
-    "speed": 45.5,
+    "latitude": "2.1896",
+    "longitude": "102.2501",
     "busId": "BUS001",
     "timestamp": "2023-12-07T10:30:00.000Z",
     "signalStrength": 85

@@ -23,15 +23,14 @@ lora = sx1276.SX1276(spi, cs=LORA_CS, reset=LORA_RESET, dio0=LORA_DIO0, dio1=LOR
 def parse_lora_data(data):
     """Parse LoRa data string into GPS coordinates"""
     try:
-        # Expected format: "BUSID,LATITUDE,LONGITUDE,SPEED,SIGNAL"
+        # Expected format: "BUSID,LATITUDE,LONGITUDE,SIGNAL"
         parts = data.decode('utf-8').split(',')
         if len(parts) >= 3:
             return {
                 'busId': parts[0] if parts[0] else 'BUS001',
                 'latitude': float(parts[1]),
                 'longitude': float(parts[2]),
-                'speed': float(parts[3]) if len(parts) > 3 and parts[3] else 0,
-                'signalStrength': int(parts[4]) if len(parts) > 4 and parts[4] else 0,
+                'signalStrength': int(parts[3]) if len(parts) > 3 and parts[3] else 0,
                 'timestamp': time.strftime("%Y-%m-%dT%H:%M:%S")
             }
     except Exception as e:

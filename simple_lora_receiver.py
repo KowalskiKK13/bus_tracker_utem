@@ -116,8 +116,7 @@ def parse_gps_data(raw_data):
                     'busId': parts[0] if parts[0] else 'BUS001',
                     'latitude': float(parts[1]),
                     'longitude': float(parts[2]),
-                    'speed': float(parts[3]) if len(parts) > 3 and parts[3] else 0,
-                    'signalStrength': int(parts[4]) if len(parts) > 4 else 0,
+                    'signalStrength': int(parts[3]) if len(parts) > 3 else 0,
                     'timestamp': time.strftime("%Y-%m-%dT%H:%M:%S")
                 }
 
@@ -132,7 +131,6 @@ def parse_gps_data(raw_data):
                 'busId': 'BUS001',
                 'latitude': float(lat),
                 'longitude': float(lng),
-                'speed': 0,
                 'signalStrength': 0,
                 'timestamp': time.strftime("%Y-%m-%dT%H:%M:%S")
             }
@@ -150,7 +148,6 @@ def test_with_dummy_data():
         'busId': 'TEST001',
         'latitude': 40.7128,
         'longitude': -74.0060,
-        'speed': 0,
         'signalStrength': 100,
         'timestamp': time.strftime("%Y-%m-%dT%H:%M:%S")
     }

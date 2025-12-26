@@ -3,88 +3,74 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bus Location Tracker</title>
-    <link rel="stylesheet" href="styles.css">
+    <title>Bus Tracker</title>
+    <!-- Leaflet CSS for the map -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        #map { height: 500px; width: 100%; border-radius: 8px; border: 1px solid #ccc; }
+        .info-panel { padding: 15px; background: #f8f9fa; margin-bottom: 20px; border-radius: 8px; border-left: 5px solid #007bff; }
+        .status-active { color: green; font-weight: bold; }
+    </style>
 </head>
 <body>
-    <div class="container">
-        <header>
-            <h1>Live Bus Tracker</h1>
-            <div class="status-indicator">
-                <span id="connection-status">Connecting...</span>
-                <div class="status-dot" id="status-dot"></div>
-            </div>
-        </header>
-
-        <div class="main-content">
-            <div class="sidebar">
-                <div class="bus-info">
-                    <h2>Bus Information</h2>
-                    <div class="info-grid">
-                        <div class="info-item">
-                            <label>Bus ID:</label>
-                            <span id="bus-id">N/A</span>
-                        </div>
-                        <div class="info-item">
-                            <label>Latitude:</label>
-                            <span id="latitude">N/A</span>
-                        </div>
-                        <div class="info-item">
-                            <label>Longitude:</label>
-                            <span id="longitude">N/A</span>
-                        </div>
-                        <div class="info-item">
-                            <label>Speed:</label>
-                            <span id="speed">N/A</span>
-                        </div>
-                        <div class="info-item">
-                            <label>Last Update:</label>
-                            <span id="last-update">N/A</span>
-                        </div>
-                        <div class="info-item">
-                            <label>Signal Strength:</label>
-                            <span id="signal-strength">N/A</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="controls">
-                    <button id="center-map-btn">Center on Bus</button>
-                    <button id="follow-bus-btn">Follow Bus</button>
-                    <button id="clear-history-btn">Clear History</button>
-                </div>
-
-                <div class="settings">
-                    <h3>Settings</h3>
-                    <div class="setting-item">
-                        <label for="update-interval">Update Interval (seconds):</label>
-                        <input type="number" id="update-interval" value="5" min="1" max="60">
-                    </div>
-                    <div class="setting-item">
-                        <label for="server-url">Server URL:</label>
-                        <input type="text" id="server-url" value="ws://192.168.1.100:8081" placeholder="ws://your-server:port">
-                    </div>
-                </div>
-            </div>
-
-            <div class="map-container">
-                <div id="map"></div>
-                <div class="map-overlay">
-                    <div class="zoom-controls">
-                        <button id="zoom-in">+</button>
-                        <button id="zoom-out">-</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="footer">
-            <p>Bus Location Tracker - LoRa GPS System | Status: <span id="system-status">Initializing...</span></p>
-        </div>
+    <h1>Real-time Bus Tracker</h1>
+    
+    <div class="info-panel">
+        <h3>Status: <span id="status">Waiting for signal...</span></h3>
+        <p><strong>Bus ID:</strong> <span id="busId">-</span></p>
+        <p><strong>Last Updated:</strong> <span id="timestamp">-</span></p>
+        <p><strong>Signal Strength:</strong> <span id="signal">-</span>%</p>
+        <p><strong>Coordinates:</strong> <span id="coords">-</span></p>
     </div>
 
-    <!-- Replace YOUR_API_KEY with your Google Maps API key -->
-    <script async defer src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY&callback=initMap"></script>
-    <script src="app.js"></script>
+    <div id="map"></div>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        // Initialize map centered on 0,0
+        const map = L.map('map').setView([0, 0], 2);
+        L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '© OpenStreetMap'
+        }).addTo(map);
+
+        const marker = L.marker([0, 0]).addTo(map);
+        let firstUpdate = true;
+
+        function updateLocation() {
+            fetch('/api/bus-location')
+                .then(response => response.json())
+                .then(data => {
+                    // Only update if we have valid coordinates
+                    if (data.latitude === 0 && data.longitude === 0) return;
+
+                    // Update text info
+                    document.getElementById('status').textContent = 'Active';
+                    document.getElementById('status').className = 'status-active';
+                    document.getElementById('busId').textContent = data.busId;
+                    document.getElementById('timestamp').textContent = data.timestamp;
+                    document.getElementById('signal').textContent = data.signalStrength;
+                    document.getElementById('coords').textContent = `${data.latitude.toFixed(6)}, ${data.longitude.toFixed(6)}`;
+
+                    // Update map marker
+                    const newLatLng = [data.latitude, data.longitude];
+                    marker.setLatLng(newLatLng);
+                    
+                    if (firstUpdate) {
+                        map.setView(newLatLng, 15); // Zoom in on first data
+                        firstUpdate = false;
+                    } else {
+                        map.panTo(newLatLng); // Follow the bus
+                    }
+                })
+                .catch(err => console.error('Error fetching data:', err));
+        }
+
+        // Poll the server every 2 seconds
+        setInterval(updateLocation, 2000);
+        updateLocation();
+    </script>
 </body>
 </html>

@@ -8,7 +8,6 @@ let followBus = false;
 let busData = {
     latitude: null,
     longitude: null,
-    speed: 0,
     busId: 'BUS001',
     timestamp: null,
     signalStrength: 0
@@ -34,7 +33,7 @@ const mapLayers = {
 function initMap() {
     // Create map centered on a default location (NYC)
     map = L.map('map', {
-        center: [40.7128, -74.0060], // Default to NYC
+        center: [2.1896, 102.2501], // Default to Malacca, Malaysia
         zoom: 14,
         layers: [mapLayers.osm]
     });
@@ -139,7 +138,6 @@ function updateBusLocation(data) {
         busData = {
             latitude: data.latitude,
             longitude: data.longitude,
-            speed: data.speed || 0,
             busId: data.busId || 'BUS001',
             timestamp: data.timestamp || new Date().toISOString(),
             signalStrength: data.signalStrength || 0
@@ -153,7 +151,6 @@ function updateBusLocation(data) {
             <strong>${busData.busId}</strong><br>
             Lat: ${lat.toFixed(6)}<br>
             Lng: ${lng.toFixed(6)}<br>
-            Speed: ${busData.speed} km/h<br>
             Signal: ${busData.signalStrength}%
         `);
 
@@ -190,7 +187,6 @@ function updateBusInfo() {
     document.getElementById('bus-id').textContent = busData.busId;
     document.getElementById('latitude').textContent = busData.latitude ? busData.latitude.toFixed(6) : 'N/A';
     document.getElementById('longitude').textContent = busData.longitude ? busData.longitude.toFixed(6) : 'N/A';
-    document.getElementById('speed').textContent = busData.speed ? `${busData.speed} km/h` : 'N/A';
     document.getElementById('signal-strength').textContent = busData.signalStrength ? `${busData.signalStrength}%` : 'N/A';
 
     if (busData.timestamp) {
@@ -327,8 +323,8 @@ function showAlert(message, type = 'info') {
 
 // Function to simulate bus movement for testing
 function simulateBusMovement() {
-    const centerLat = 40.7128;
-    const centerLng = -74.0060;
+    const centerLat = 2.1896;
+    const centerLng = 102.2501;
     let angle = 0;
 
     setInterval(() => {
@@ -340,7 +336,6 @@ function simulateBusMovement() {
             const simulatedData = {
                 latitude: lat,
                 longitude: lng,
-                speed: Math.random() * 60,
                 busId: 'BUS001',
                 timestamp: new Date().toISOString(),
                 signalStrength: Math.floor(Math.random() * 100)

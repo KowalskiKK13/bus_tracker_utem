@@ -64,15 +64,6 @@ def parse_gps_data():
                         latitude = convert_to_degrees(lat, lat_dir)
                         longitude = convert_to_degrees(lon, lon_dir)
 
-                        # Extract speed if available (from GPRMC)
-                        speed = 0
-                        if data.startswith("$GPRMC") and len(parts) > 7:
-                            speed_knots = parts[7]
-                            try:
-                                speed = float(speed_knots) * 1.852  # Convert to km/h
-                            except:
-                                speed = 0
-
                         # Extract fix quality if available (from GPGGA)
                         has_fix = True
                         if data.startswith("$GPGGA") and len(parts) > 6:
@@ -83,7 +74,6 @@ def parse_gps_data():
                             return {
                                 'latitude': latitude,
                                 'longitude': longitude,
-                                'speed': speed,
                                 'fix': has_fix,
                                 'timestamp': time.strftime("%Y-%m-%dT%H:%M:%S")
                             }
@@ -95,8 +85,8 @@ def parse_gps_data():
 
 def format_lora_data(gps_data):
     """Format GPS data for LoRa transmission"""
-    # Format: "BUSID,LATITUDE,LONGITUDE,SPEED,SIGNAL"
-    return f"{BUS_ID},{gps_data['latitude']:.6f},{gps_data['longitude']:.6f},{gps_data['speed']:.1f},85"
+    # Format: "BUSID,LATITUDE,LONGITUDE,SIGNAL"
+    return f"{BUS_ID},{gps_data['latitude']:.6f},{gps_data['longitude']:.6f},85"
 
 def init_lora():
     """Initialize LoRa module (using a simple approach)"""
@@ -180,7 +170,7 @@ def main():
 
         if new_gps_data:
             if new_gps_data != gps_data:  # Only print if data changed
-                print(f"GPS Fix: Lat={new_gps_data['latitude']:.6f}, Lon={new_gps_data['longitude']:.6f}, Speed={new_gps_data['speed']:.1f}km/h")
+                print(f"GPS Fix: Lat={new_gps_data['latitude']:.6f}, Lon={new_gps_data['longitude']:.6f}")
                 gps_data = new_gps_data
 
         current_time = time.time()

@@ -116,8 +116,7 @@ def parse_nmea(sentence):
             lat_dir = data[4]
             lon_raw = data[5]
             lon_dir = data[6]
-            speed_knots = data[7] if len(data) > 7 else '0'
-
+            
             if status != 'A' or not lat_raw or not lon_raw:  # No valid data
                 return None
 
@@ -125,12 +124,10 @@ def parse_nmea(sentence):
             longitude = convert_to_degrees(lon_raw, lon_dir)
 
             if latitude and longitude:
-                speed_kmh = float(speed_knots) * 1.852 if speed_knots else 0
 
                 return {
                     'latitude': latitude,
                     'longitude': longitude,
-                    'speed': speed_kmh,
                     'time': time_str,
                     'fix': True
                 }
@@ -142,8 +139,8 @@ def parse_nmea(sentence):
 
 def format_gps_data(gps_data, bus_id='BUS001'):
     """Format GPS data for transmission"""
-    # Simple CSV format: "BUSID,LATITUDE,LONGITUDE,SPEED,SIGNAL"
-    return f"{bus_id},{gps_data['latitude']:.6f},{gps_data['longitude']:.6f},{gps_data.get('speed', 0):.1f},85"
+    # Simple CSV format: "BUSID,LATITUDE,LONGITUDE,SIGNAL"
+    return f"{bus_id},{gps_data['latitude']:.6f},{gps_data['longitude']:.6f},85"
 
 def init_gps():
     """Initialize GPS module using your exact configuration"""
@@ -170,9 +167,7 @@ def send_lora_data(lora_device, data_str):
 def simulate_gps():
     """Simulate GPS data for testing"""
     locations = [
-        (40.7128, -74.0060),  # NYC
-        (40.7589, -73.9851),  # Times Square
-        (40.7505, -73.9934),  # Empire State
+        (2.1896, 102.2501),  # Malacca, Malaysia
     ]
     i = 0
 
@@ -180,7 +175,6 @@ def simulate_gps():
         yield {
             'latitude': locations[i][0] + (i * 0.001),
             'longitude': locations[i][1] + (i * 0.001),
-            'speed': 30 + (i * 10),
             'fix': True
         }
         i = (i + 1) % len(locations)

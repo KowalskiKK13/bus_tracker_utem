@@ -18,9 +18,8 @@ def test_connection():
 
     test_data = {
         'busId': 'TEST001',
-        'latitude': 40.7128,
-        'longitude': -74.0060,
-        'speed': 0,
+        'latitude': 2.1896,
+        'longitude': 102.2501,
         'signalStrength': 100,
         'timestamp': datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
     }

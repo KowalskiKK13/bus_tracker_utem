@@ -10,13 +10,9 @@ import random
 SERVER_URL = "http://localhost:3000"  # Change to your server IP if testing from another device
 API_ENDPOINT = "/api/bus-location"
 
-# Sample GPS coordinates (New York City area)
+# Sample GPS coordinates (Malacca, Malaysia)
 SAMPLE_LOCATIONS = [
-    {"lat": 40.7589, "lng": -73.9851},  # Times Square
-    {"lat": 40.7505, "lng": -73.9934},  # Empire State Building
-    {"lat": 40.6892, "lng": -74.0445},  # Statue of Liberty
-    {"lat": 40.7831, "lng": -73.9712},  # Central Park
-    {"lat": 40.7061, "lng": -73.9969},  # Brooklyn Bridge
+    {"lat": 2.1896, "lng": 102.2501}
 ]
 
 def send_test_data():
@@ -27,7 +23,6 @@ def send_test_data():
             "busId": "BUS001",
             "latitude": location["lat"] + random.uniform(-0.001, 0.001),  # Add small random variation
             "longitude": location["lng"] + random.uniform(-0.001, 0.001),
-            "speed": random.uniform(0, 60),
             "signalStrength": random.randint(70, 100),
             "timestamp": time.strftime("%Y-%m-%dT%H:%M:%S")
         }

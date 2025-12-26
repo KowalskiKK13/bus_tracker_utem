@@ -1,15 +1,16 @@
 #!/usr/bin/env python3
 """
-Raspberry Pi 3B LoRa GPS Receiver
+Raspberry Pi 3B LoRa GPS Receiver using SX127x library
 Receives GPS data from Pi Pico W transmitter and sends to web server
 """
 
-import serial
+import time
 import requests
 import json
-import time
-import threading
 from datetime import datetime
+from SX127x.LoRa import LoRa
+from SX127x.board_config import BOARD
+from SX127x.constants import MODE
 
 # Configuration
 SERIAL_PORT = '/dev/ttyUSB0'  # Change based on your LoRa module connection
@@ -17,7 +18,7 @@ BAUD_RATE = 9600  # Adjust based on your LoRa module
 
 # WiFi is already connected on Raspberry Pi OS
 # Server Configuration - UPDATE YOUR SERVER IP
-SERVER_IP = "192.168.68.136"  # Your computer's IP from server output
+SERVER_IP = "192.168.56.1"  # Your computer's IP from server output
 SERVER_PORT = "3000"
 SERVER_URL = f"http://{SERVER_IP}:{SERVER_PORT}/api/bus-location"
 
@@ -50,8 +51,7 @@ def parse_gps_data(raw_data):
                     'busId': parts[0] if parts[0] else 'BUS001',
                     'latitude': float(parts[1]),
                     'longitude': float(parts[2]),
-                    'speed': float(parts[3]) if len(parts) > 3 and parts[3] else 0,
-                    'signalStrength': int(parts[4]) if len(parts) > 4 else 85,
+                    'signalStrength': int(parts[3]) if len(parts) > 3 else 85,
                     'timestamp': datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
                 }
 
@@ -70,7 +70,6 @@ def parse_gps_data(raw_data):
                 'busId': 'BUS001',
                 'latitude': float(lat),
                 'longitude': float(lng),
-                'speed': 0,
                 'signalStrength': 85,
                 'timestamp': datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
             }
@@ -88,7 +87,6 @@ def test_server_connection():
         'busId': 'TEST001',
         'latitude': 40.7128,
         'longitude': -74.0060,
-        'speed': 0,
         'signalStrength': 100,
         'timestamp': datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
     }
@@ -180,7 +178,6 @@ def main():
                         print(f"\n[{data_count}] GPS Data Received:")
                         print(f"  Bus ID: {gps_data['busId']}")
                         print(f"  Location: {gps_data['latitude']:.6f}, {gps_data['longitude']:.6f}")
-                        print(f"  Speed: {gps_data['speed']:.1f} km/h")
                         print(f"  Signal: {gps_data['signalStrength']}%")
 
                         # Send to web server
