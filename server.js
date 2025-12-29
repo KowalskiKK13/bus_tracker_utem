@@ -1,4 +1,5 @@
 const express = require('express');
+const path = require('path');
 const app = express();
 const port = 3000;
 
@@ -33,6 +34,13 @@ app.get('/api/bus-location', (req, res) => {
     res.json(latestBusData);
 });
 
+// Serve index.html from the main folder if not found in 'public'
+app.get('/', (req, res) => {
+    console.log('Serving index.html to client...');
+    res.sendFile(path.join(__dirname, 'index.html'));
+});
+
 app.listen(port, () => {
     console.log(`Server running at http://localhost:${port}`);
+    console.log('Press Ctrl+C to stop the server');
 });

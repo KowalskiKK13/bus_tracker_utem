@@ -18,7 +18,7 @@ BAUD_RATE = 9600  # Adjust based on your LoRa module
 
 # WiFi is already connected on Raspberry Pi OS
 # Server Configuration - UPDATE YOUR SERVER IP
-SERVER_IP = "192.168.56.1"  # Your computer's IP from server output
+SERVER_IP = "192.168.68.136"
 SERVER_PORT = "3000"
 SERVER_URL = f"http://{SERVER_IP}:{SERVER_PORT}/api/bus-location"
 

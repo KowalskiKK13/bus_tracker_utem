@@ -7,15 +7,15 @@ Receives GPS data from Pi Pico W transmitter and sends to web server
 import time
 import requests
 import json
+import re
+import argparse
 from datetime import datetime
 from SX127x.LoRa import LoRa
 from SX127x.board_config import BOARD
 from SX127x.constants import MODE
 
-# Server Configuration - UPDATE YOUR SERVER IP
-SERVER_IP = "192.168.1.X"  # REPLACE WITH YOUR PC's IP ADDRESS (Check 'ipconfig' on Windows)
-SERVER_PORT = "3000"
-SERVER_URL = f"http://{SERVER_IP}:{SERVER_PORT}/api/bus-location"
+# Global server URL, will be set in main()
+SERVER_URL = ""
 
 class LoRaReceiver(LoRa):
     def __init__(self):
@@ -30,6 +30,7 @@ class LoRaReceiver(LoRa):
         """Send GPS data to web server"""
         try:
             headers = {'Content-Type': 'application/json'}
+            # Use the global SERVER_URL variable
             response = requests.post(SERVER_URL, data=json.dumps(gps_data), headers=headers, timeout=5)
             if response.status_code == 200:
                 print(f"✓ Data sent to server - Lat: {gps_data['latitude']}, Lng: {gps_data['longitude']}")
@@ -47,36 +48,58 @@ class LoRaReceiver(LoRa):
             data_str = raw_data.strip()
             print(f"Raw data received: {data_str}")
 
-            # Format 1: "BUS001,40.7128,-74.0060,45.5,85"
-            if ',' in data_str:
+            # Default structure
+            gps_data = {
+                'busId': 'BUS001',
+                'latitude': 0.0,
+                'longitude': 0.0,
+                'signalStrength': 85,
+                'timestamp': datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
+            }
+            
+            parsed = False
+
+            # Attempt 1: Try parsing as CSV (Format: BUSID,LAT,LON,SIGNAL)
+            if ',' in data_str and not '{' in data_str:
                 parts = data_str.split(',')
                 if len(parts) >= 3:
-                    return {
-                        'busId': parts[0] if parts[0] else 'BUS001',
-                        'latitude': float(parts[1]),
-                        'longitude': float(parts[2]),
-                        'signalStrength': int(parts[3]) if len(parts) > 3 else 85,
-                        'timestamp': datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
-                    }
+                    try:
+                        gps_data['busId'] = parts[0].strip() if parts[0] else 'BUS001'
+                        gps_data['latitude'] = float(parts[1])
+                        gps_data['longitude'] = float(parts[2])
+                        if len(parts) > 3:
+                            gps_data['signalStrength'] = int(parts[3])
+                        parsed = True
+                    except ValueError:
+                        pass
 
-            # Format 2: JSON string
-            elif data_str.startswith('{'):
-                data = json.loads(data_str)
-                # Add timestamp if not present
-                if 'timestamp' not in data:
-                    data['timestamp'] = datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
-                return data
+            # Attempt 2: Try parsing as JSON
+            if not parsed and '{' in data_str and '}' in data_str:
+                try:
+                    # Find JSON part if mixed with other text
+                    json_str = data_str[data_str.find('{'):data_str.rfind('}')+1]
+                    data = json.loads(json_str)
+                    
+                    # Handle different casing for keys
+                    if 'busID' in data: gps_data['busId'] = data['busID']
+                    if 'busId' in data: gps_data['busId'] = data['busId']
+                    if 'latitude' in data: gps_data['latitude'] = float(data['latitude'])
+                    if 'longitude' in data: gps_data['longitude'] = float(data['longitude'])
+                    if 'signalStrength' in data: gps_data['signalStrength'] = int(data['signalStrength'])
+                    parsed = True
+                except: pass
 
-            # Format 3: Simple coordinates "40.7128,-74.0060"
-            elif data_str.count(',') == 1:
-                lat, lng = data_str.split(',')
-                return {
-                    'busId': 'BUS001',
-                    'latitude': float(lat),
-                    'longitude': float(lng),
-                    'signalStrength': 85,
-                    'timestamp': datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
-                }
+            # Attempt 3: Regex search for coordinates (works for CSV, text, etc.)
+            if not parsed or gps_data['latitude'] == 0:
+                # Look for floating point numbers
+                numbers = re.findall(r'[-+]?\d*\.\d+', data_str)
+                if len(numbers) >= 2:
+                    gps_data['latitude'] = float(numbers[0])
+                    gps_data['longitude'] = float(numbers[1])
+                    parsed = True
+            
+            if parsed and (gps_data['latitude'] != 0 or gps_data['longitude'] != 0):
+                return gps_data
 
         except Exception as e:
             print(f"Error parsing GPS data: {e}")
@@ -136,10 +159,21 @@ class LoRaReceiver(LoRa):
 
 def main():
     """Main receiver loop"""
+    global SERVER_URL
+
+    parser = argparse.ArgumentParser(description="LoRa GPS Receiver for Raspberry Pi. Receives GPS data and sends it to a web server.")
+    parser.add_argument("server_ip", help="The IP address of the web server (e.g., 192.168.1.10).")
+    parser.add_argument("--port", default="3000", help="The port of the web server (default: 3000).")
+    args = parser.parse_args()
+
+    # Construct the server URL from arguments
+    SERVER_URL = f"http://{args.server_ip}:{args.port}/api/bus-location"
+    
     print("=" * 50)
     print("LoRa GPS Receiver for Raspberry Pi 3B")
     print("=" * 50)
-    print(f"Server URL: {SERVER_URL}")
+    print(f"Target Server URL: {SERVER_URL}")
+    print(f"View Map at: http://{args.server_ip}:{args.port}")
     print()
 
     # Setup LoRa board
@@ -154,8 +188,8 @@ def main():
         if not lora.test_server_connection():
             print("\nPlease make sure:")
             print("1. The web server is running on your computer")
-            print("2. The IP address is correct")
-            print("3. Firewall is not blocking port 3000")
+            print(f"2. The IP address '{args.server_ip}' is correct")
+            print(f"3. A firewall is not blocking port {args.port}")
             return
 
         print("\n✓ Receiver ready! Waiting for GPS data...")

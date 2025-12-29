@@ -7,24 +7,36 @@
     <!-- Leaflet CSS for the map -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
-        body { font-family: Arial, sans-serif; margin: 20px; }
-        #map { height: 500px; width: 100%; border-radius: 8px; border: 1px solid #ccc; }
-        .info-panel { padding: 15px; background: #f8f9fa; margin-bottom: 20px; border-radius: 8px; border-left: 5px solid #007bff; }
-        .status-active { color: green; font-weight: bold; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; background-color: #f0f2f5; }
+        .container { max-width: 1200px; margin: 20px auto; padding: 20px; }
+        .header { background: #007bff; color: white; padding: 20px; border-radius: 8px 8px 0 0; display: flex; justify-content: space-between; align-items: center; }
+        h1 { margin: 0; font-size: 24px; }
+        .info-panel { background: white; padding: 20px; border-radius: 0 0 8px 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 20px; }
+        .info-card { padding: 10px; background: #f8f9fa; border-radius: 6px; border-left: 4px solid #007bff; }
+        .info-label { font-size: 12px; color: #666; text-transform: uppercase; letter-spacing: 1px; }
+        .info-value { font-size: 18px; font-weight: bold; color: #333; margin-top: 5px; }
+        #map { height: 600px; width: 100%; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); border: 1px solid #ddd; }
+        .status-active { color: #28a745; font-weight: bold; }
+        .status-waiting { color: #dc3545; font-weight: bold; }
     </style>
 </head>
 <body>
-    <h1>Real-time Bus Tracker</h1>
-    
-    <div class="info-panel">
-        <h3>Status: <span id="status">Waiting for signal...</span></h3>
-        <p><strong>Bus ID:</strong> <span id="busId">-</span></p>
-        <p><strong>Last Updated:</strong> <span id="timestamp">-</span></p>
-        <p><strong>Signal Strength:</strong> <span id="signal">-</span>%</p>
-        <p><strong>Coordinates:</strong> <span id="coords">-</span></p>
-    </div>
+    <div class="container">
+        <div class="header">
+            <h1>🚌 Real-time Bus Tracker</h1>
+            <div id="connection-status" style="font-size: 14px;">● Live System</div>
+        </div>
+        
+        <div class="info-panel">
+            <div class="info-card"><div class="info-label">Status</div><div class="info-value" id="status"><span class="status-waiting">Waiting...</span></div></div>
+            <div class="info-card"><div class="info-label">Bus ID</div><div class="info-value" id="busId">-</div></div>
+            <div class="info-card"><div class="info-label">Signal</div><div class="info-value" id="signal">-</div></div>
+            <div class="info-card"><div class="info-label">Last Updated</div><div class="info-value" id="timestamp">-</div></div>
+            <div class="info-card"><div class="info-label">Location</div><div class="info-value" id="coords">-</div></div>
+        </div>
 
-    <div id="map"></div>
+        <div id="map"></div>
+    </div>
 
     <!-- Leaflet JS -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -36,33 +48,59 @@
             attribution: '© OpenStreetMap'
         }).addTo(map);
 
-        const marker = L.marker([0, 0]).addTo(map);
+        // Custom Bus Icon
+        const busIcon = L.icon({
+            iconUrl: 'https://cdn-icons-png.flaticon.com/512/3448/3448339.png',
+            iconSize: [40, 40],
+            iconAnchor: [20, 20],
+            popupAnchor: [0, -20]
+        });
+
+        const marker = L.marker([0, 0], {icon: busIcon}).addTo(map);
+        const pathLine = L.polyline([], {color: 'blue', weight: 4, opacity: 0.7}).addTo(map);
+        
         let firstUpdate = true;
+        let pathCoordinates = [];
 
         function updateLocation() {
             fetch('/api/bus-location')
                 .then(response => response.json())
                 .then(data => {
-                    // Only update if we have valid coordinates
-                    if (data.latitude === 0 && data.longitude === 0) return;
-
-                    // Update text info
-                    document.getElementById('status').textContent = 'Active';
-                    document.getElementById('status').className = 'status-active';
+                    // Determine status based on coordinates
+                    if (data.latitude !== 0 || data.longitude !== 0) {
+                        document.getElementById('status').innerHTML = '<span class="status-active">Active Tracking</span>';
+                    } else {
+                        document.getElementById('status').innerHTML = '<span class="status-waiting">Waiting for Signal...</span>';
+                    }
+                    
+                    // Always update text info
                     document.getElementById('busId').textContent = data.busId;
                     document.getElementById('timestamp').textContent = data.timestamp;
-                    document.getElementById('signal').textContent = data.signalStrength;
+                    document.getElementById('signal').textContent = data.signalStrength + '%';
                     document.getElementById('coords').textContent = `${data.latitude.toFixed(6)}, ${data.longitude.toFixed(6)}`;
 
-                    // Update map marker
+                    // Always update map marker
                     const newLatLng = [data.latitude, data.longitude];
                     marker.setLatLng(newLatLng);
+                    marker.bindPopup(`<b>${data.busId}</b><br>Signal: ${data.signalStrength}%`);
                     
-                    if (firstUpdate) {
-                        map.setView(newLatLng, 15); // Zoom in on first data
-                        firstUpdate = false;
+                    // Only add valid coordinates to the path
+                    if (data.latitude !== 0 || data.longitude !== 0) {
+                        pathCoordinates.push(newLatLng);
+                        if (pathCoordinates.length > 1000) pathCoordinates.shift(); // Keep last 1000 points
+                        pathLine.setLatLngs(pathCoordinates);
+                        
+                        if (firstUpdate) {
+                            map.setView(newLatLng, 16); // Zoom in on first data
+                            firstUpdate = false;
+                        } else {
+                            map.panTo(newLatLng); // Follow the bus
+                        }
                     } else {
-                        map.panTo(newLatLng); // Follow the bus
+                        // If we are at 0,0, reset the view
+                        if (firstUpdate) {
+                            map.setView(newLatLng, 2);
+                        }
                     }
                 })
                 .catch(err => console.error('Error fetching data:', err));
