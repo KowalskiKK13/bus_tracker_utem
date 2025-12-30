@@ -5,7 +5,8 @@ Receives GPS data from Pi Pico W transmitter and sends to web server
 """
 
 import time
-import requests
+import urllib.request
+import urllib.error
 import json
 import re
 import argparse
@@ -14,8 +15,11 @@ from SX127x.LoRa import LoRa
 from SX127x.board_config import BOARD
 from SX127x.constants import MODE
 
-# Global server URL, will be set in main()
-SERVER_URL = ""
+# --- SERVER CONFIGURATION ---
+# IMPORTANT: Replace with your computer's IP address
+SERVER_IP = "192.168.56.1" 
+SERVER_PORT = "3000"
+SERVER_URL = f"http://{SERVER_IP}:{SERVER_PORT}/api/bus-location"
 
 class LoRaReceiver(LoRa):
     def __init__(self):
@@ -29,17 +33,26 @@ class LoRaReceiver(LoRa):
     def send_to_server(self, gps_data):
         """Send GPS data to web server"""
         try:
-            headers = {'Content-Type': 'application/json'}
-            # Use the global SERVER_URL variable
-            response = requests.post(SERVER_URL, data=json.dumps(gps_data), headers=headers, timeout=5)
-            if response.status_code == 200:
-                print(f"✓ Data sent to server - Lat: {gps_data['latitude']}, Lng: {gps_data['longitude']}")
-                return True
-            else:
-                print(f"✗ Server responded with status: {response.status_code}")
-                return False
-        except requests.exceptions.RequestException as e:
+            data = json.dumps(gps_data).encode('utf-8')
+            req = urllib.request.Request(
+                SERVER_URL,
+                data=data,
+                headers={'Content-Type': 'application/json'},
+                method='POST'
+            )
+            with urllib.request.urlopen(req, timeout=5) as response:
+                if response.status == 200:
+                    print(f"✓ Data sent to server - Lat: {gps_data['latitude']}, Lng: {gps_data['longitude']}")
+                    return True
+                else:
+                    print(f"✗ Server responded with status: {response.status}")
+                    return False
+        except urllib.error.URLError as e:
             print(f"✗ Error sending to server: {e}")
+            return False
+        except Exception as e:
+            # Catch other potential errors like timeouts
+            print(f"✗ An unexpected error occurred: {e}")
             return False
 
     def parse_gps_data(self, raw_data):
@@ -59,19 +72,26 @@ class LoRaReceiver(LoRa):
             
             parsed = False
 
-            # Attempt 1: Try parsing as CSV (Format: BUSID,LAT,LON,SIGNAL)
+            # Attempt 1: Try parsing as CSV
             if ',' in data_str and not '{' in data_str:
                 parts = data_str.split(',')
-                if len(parts) >= 3:
-                    try:
+                try:
+                    if len(parts) == 2:
+                        # Case: LAT,LON
+                        gps_data['latitude'] = float(parts[0])
+                        gps_data['longitude'] = float(parts[1])
+                        parsed = True
+                    elif len(parts) >= 3:
+                        # Case: BUSID,LAT,LON
                         gps_data['busId'] = parts[0].strip() if parts[0] else 'BUS001'
                         gps_data['latitude'] = float(parts[1])
                         gps_data['longitude'] = float(parts[2])
                         if len(parts) > 3:
                             gps_data['signalStrength'] = int(parts[3])
                         parsed = True
-                    except ValueError:
-                        pass
+                except (ValueError, IndexError) as e:
+                    print(f"  - CSV parse failed: {e}")
+                    pass
 
             # Attempt 2: Try parsing as JSON
             if not parsed and '{' in data_str and '}' in data_str:
@@ -159,21 +179,13 @@ class LoRaReceiver(LoRa):
 
 def main():
     """Main receiver loop"""
-    global SERVER_URL
-
-    parser = argparse.ArgumentParser(description="LoRa GPS Receiver for Raspberry Pi. Receives GPS data and sends it to a web server.")
-    parser.add_argument("server_ip", help="The IP address of the web server (e.g., 192.168.1.10).")
-    parser.add_argument("--port", default="3000", help="The port of the web server (default: 3000).")
-    args = parser.parse_args()
-
-    # Construct the server URL from arguments
-    SERVER_URL = f"http://{args.server_ip}:{args.port}/api/bus-location"
-    
     print("=" * 50)
     print("LoRa GPS Receiver for Raspberry Pi 3B")
     print("=" * 50)
     print(f"Target Server URL: {SERVER_URL}")
-    print(f"View Map at: http://{args.server_ip}:{args.port}")
+    # The user's view URL will depend on the actual IP, so we can't print a reliable one here.
+    # A generic message is better.
+    print("View Map by opening index.html on the server machine.")
     print()
 
     # Setup LoRa board
@@ -188,8 +200,8 @@ def main():
         if not lora.test_server_connection():
             print("\nPlease make sure:")
             print("1. The web server is running on your computer")
-            print(f"2. The IP address '{args.server_ip}' is correct")
-            print(f"3. A firewall is not blocking port {args.port}")
+            print(f"2. The SERVER_IP '{SERVER_IP}' in the script is correct")
+            print(f"3. A firewall is not blocking port {SERVER_PORT}")
             return
 
         print("\n✓ Receiver ready! Waiting for GPS data...")
