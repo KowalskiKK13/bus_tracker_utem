@@ -7,116 +7,154 @@
 
     <!-- Leaflet CSS (Free OpenStreetMap) -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.0/css/all.min.css">
 
     <link rel="stylesheet" href="styles.css">
     <style>
-        /* Additional styles for OpenStreetMap */
-        .map-container {
+        :root {
+            --header-gradient: linear-gradient(135deg, #00B4DB, #0083B0);
+            --background-color: #f0f2f5;
+            --container-bg: rgba(255, 255, 255, 0.85);
+            --sidebar-bg: rgba(255, 255, 255, 0.7);
+            --text-color: #333;
+            --accent-color: #0083B0;
+            --shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--background-color);
+            backdrop-filter: blur(3px);
+        }
+
+        .container {
+            animation: fadeIn 1s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        header {
+            background: var(--header-gradient);
             position: relative;
-            height: 100%;
         }
 
-        #map {
-            height: 100%;
-            width: 100%;
-            z-index: 1;
+        header h1 {
+            font-size: 1.6rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
 
-        /* Custom bus icon for Leaflet */
-        .bus-icon {
-            background-color: #4285f4;
-            border: 3px solid white;
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
+        .header-logo {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            height: 50px;
+            z-index: 1001;
+            opacity: 0.9;
+        }
+
+        .sidebar {
+            background: var(--sidebar-bg);
+            backdrop-filter: blur(10px);
+            border-right: 1px solid rgba(255, 255, 255, 0.18);
+            box-shadow: var(--shadow);
+        }
+
+        .bus-info h2, .settings h3 {
+            border-bottom: 2px solid var(--accent-color);
+            padding-bottom: 10px;
+            display: inline-block;
+        }
+
+        .info-item {
+            background: rgba(255, 255, 255, 0.5);
+            border-radius: 10px;
+            padding: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .info-item:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .info-item label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--accent-color);
+        }
+
+        button {
             display: flex;
             align-items: center;
             justify-content: center;
-            color: white;
-            font-weight: bold;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+            gap: 10px;
+            background: var(--header-gradient);
         }
 
-        .bus-icon::before {
-            content: "🚌";
-            font-size: 20px;
-        }
-
-        /* Map attribution styles */
-        .leaflet-control-attribution {
-            font-size: 10px;
-        }
-
-        /* Update alert for location */
-        .location-update {
-            position: absolute;
-            background: #4CAF50;
-            color: white;
-            padding: 5px 10px;
-            border-radius: 4px;
-            font-size: 12px;
-            z-index: 1000;
-            pointer-events: none;
-            animation: fadeInOut 2s ease-in-out;
-        }
-
-        @keyframes fadeInOut {
-            0% { opacity: 0; transform: scale(0.8); }
-            20% { opacity: 1; transform: scale(1.1); }
-            80% { opacity: 1; transform: scale(1); }
-            100% { opacity: 0; transform: scale(0.8); }
+        .footer {
+            background: var(--accent-color);
         }
     </style>
 </head>
 <body>
     <div class="container">
         <header>
-            <h1>🚌 Live Bus Tracker (OpenStreetMap)</h1>
+            <h1><i class="fa-solid fa-bus-simple"></i> Live Bus Tracker</h1>
             <div class="status-indicator">
                 <span id="connection-status">Connecting...</span>
                 <div class="status-dot" id="status-dot"></div>
             </div>
+            <img src="LogoJawiUTeM_white-01.png" alt="UTeM Logo" class="header-logo">
         </header>
 
         <div class="main-content">
             <div class="sidebar">
                 <div class="bus-info">
-                    <h2>Bus Information</h2>
+                    <h2><i class="fa-solid fa-circle-info"></i> Bus Information</h2>
                     <div class="info-grid">
                         <div class="info-item">
-                            <label>Bus ID:</label>
+                            <label><i class="fa-solid fa-id-card"></i> Bus ID:</label>
                             <span id="bus-id">N/A</span>
                         </div>
                         <div class="info-item">
-                            <label>Latitude:</label>
+                            <label><i class="fa-solid fa-location-arrow"></i> Latitude:</label>
                             <span id="latitude">N/A</span>
                         </div>
                         <div class="info-item">
-                            <label>Longitude:</label>
+                            <label><i class="fa-solid fa-location-arrow"></i> Longitude:</label>
                             <span id="longitude">N/A</span>
                         </div>
-                        
                         <div class="info-item">
-                            <label>Last Update:</label>
+                            <label><i class="fa-solid fa-clock"></i> Last Update:</label>
                             <span id="last-update">N/A</span>
-                        </div>
-                        <div class="info-item">
-                            <label>Signal Strength:</label>
-                            <span id="signal-strength">N/A</span>
                         </div>
                     </div>
                 </div>
 
                 <div class="controls">
-                    <button id="center-map-btn">Center on Bus</button>
-                    <button id="follow-bus-btn">Follow Bus</button>
-                    <button id="clear-history-btn">Clear History</button>
+                    <button id="center-map-btn"><i class="fa-solid fa-crosshairs"></i> Center on Bus</button>
+                    <button id="follow-bus-btn"><i class="fa-solid fa-location-pin"></i> Follow Bus</button>
+                    <button id="clear-history-btn"><i class="fa-solid fa-trash-can"></i> Clear History</button>
                 </div>
 
                 <div class="settings">
-                    <h3>Settings</h3>
+                    <h3><i class="fa-solid fa-gear"></i> Settings</h3>
                     <div class="setting-item">
-                        <label for="update-interval">Update Interval (seconds):</label>
+                        <label for="update-interval">Update Interval (s):</label>
                         <input type="number" id="update-interval" value="5" min="1" max="60">
                     </div>
                     <div class="setting-item">
@@ -146,7 +184,7 @@
         </div>
 
         <div class="footer">
-            <p>🗺️ Bus Location Tracker - OpenStreetMap | Status: <span id="system-status">Initializing...</span></p>
+            <p><i class="fa-solid fa-map-location-dot"></i> Bus Location Tracker | Status: <span id="system-status">Initializing...</span></p>
         </div>
     </div>
 
