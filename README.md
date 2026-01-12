@@ -1,6 +1,6 @@
 # Bus Location Tracker
 
-Real-time bus tracking system using Raspberry Pi Pico W with LoRa communication and Google Maps visualization.
+Real-time bus tracking system using Raspberry Pi Pico W with LoRa communication and OpenStreetMap visualization.
 
 ## System Architecture
 
@@ -10,7 +10,7 @@ Bus (Transmitter) → LoRa → Raspberry Pi Pico W (Receiver) → Server → Web
 
 ## Features
 
-- 🚌 Real-time bus location tracking on Google Maps
+- 🚌 Real-time bus location tracking on OpenStreetMap
 - 📡 LoRa communication for long-range tracking
 - 📍 GPS coordinate display and route history
 - 📊 Signal strength monitoring
@@ -19,22 +19,14 @@ Bus (Transmitter) → LoRa → Raspberry Pi Pico W (Receiver) → Server → Web
 
 ## Setup Instructions
 
-### 1. Get Google Maps API Key
-
-1. Go to [Google Cloud Console](https://console.cloud.google.com/)
-2. Create a new project or select existing one
-3. Enable "Maps JavaScript API"
-4. Create credentials (API Key)
-5. Replace `YOUR_API_KEY` in `index.html` with your actual API key
-
-### 2. Install Node.js Dependencies
+### 1. Install Node.js Dependencies
 
 ```bash
 cd bus-tracker
 npm install
 ```
 
-### 3. Start the Server
+### 2. Start the Server
 
 ```bash
 npm start
@@ -44,9 +36,14 @@ The server will run on:
 - HTTP: http://localhost:3000
 - WebSocket: ws://localhost:8080
 
-### 4. Open the Web Interface
+### 3. Open the Web Interface
 
-Navigate to http://localhost:3000 in your web browser.
+You can use one of the following HTML files:
+
+- `index.html`: A simple map display.
+- `index_osm.html`: A more feature-rich interface with a sidebar for information and controls.
+
+Navigate to http://localhost:3000/index.html or http://localhost:3000/index_osm.html in your web browser.
 
 ## Raspberry Pi Pico W Integration
 
@@ -97,14 +94,14 @@ The server monitors this file and updates the web interface automatically.
 
 ### WebSocket Settings
 
-- **Server URL**: Change in the web interface settings
-- **Update Interval**: Set between 1-60 seconds
-- **Follow Mode**: Toggle to auto-center map on bus
+- **Server URL**: Change in the web interface settings (in `index_osm.html`)
+- **Update Interval**: Set between 1-60 seconds (in `index_osm.html`)
+- **Follow Mode**: Toggle to auto-center map on bus (in `index_osm.html`)
 
 ### Customization
 
-- Modify bus icon in `app.js` (search for SVG bus icon)
-- Change map styles and initial center coordinates
+- Modify bus icon in `app_osm.js`
+- Change map styles and initial center coordinates in `app_osm.js`
 - Adjust colors in `styles.css`
 
 ## Hardware Requirements
@@ -139,16 +136,12 @@ Expected data format for location updates:
 
 ### Common Issues
 
-1. **Google Maps not loading**
-   - Check API key is valid and Maps JavaScript API is enabled
-   - Ensure you have billing enabled on your Google Cloud account
-
-2. **WebSocket connection failed**
+1. **WebSocket connection failed**
    - Verify server is running on port 8080
    - Check firewall settings
    - Try using HTTP fallback
 
-3. **No location updates**
+2. **No location updates**
    - Verify LoRa communication is working
    - Check Pico W is connected to network
    - Check server logs for incoming requests
@@ -170,7 +163,7 @@ npm run dev
 
 ### Testing Without Hardware
 
-Uncomment the simulation function in `app.js` to test the interface without actual GPS data.
+Uncomment the simulation function in `app_osm.js` to test the interface without actual GPS data.
 
 ## API Endpoints
 

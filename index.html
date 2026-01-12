@@ -11,197 +11,60 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --primary-color: #00A8FF;
-            --secondary-color: #0077B6;
-            --background-color: #1a1a1a;
-            --surface-color: #2c2c2c;
-            --text-color: #ffffff;
-            --subtle-text-color: #a0a0a0;
-            --success-color: #28a745;
-            --warning-color: #ffc107;
-            --danger-color: #dc3545;
-            --border-radius: 12px;
-            --box-shadow: 0 10px 20px rgba(0,0,0,0.19), 0 6px 6px rgba(0,0,0,0.23);
-        }
-
-        body { 
-            font-family: 'Poppins', sans-serif; 
-            margin: 0; 
-            padding: 0; 
-            background-color: var(--background-color); 
-            color: var(--text-color);
-            overflow-x: hidden;
-        }
-
-        .container { 
-            max-width: 1400px; 
-            margin: 20px auto; 
-            padding: 20px; 
-            position: relative; 
-        }
-
-        .header { 
-            background: linear-gradient(90deg, var(--surface-color), #333333);
-            color: white; 
-            padding: 15px 30px; 
-            border-radius: var(--border-radius); 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center; 
-            box-shadow: var(--box-shadow);
-            border: 1px solid #444;
-        }
-
-        .header-logo {
-            width: 80px;
-            height: auto;
-            border-radius: 50%;
-            border: 2px solid var(--primary-color);
-            transition: transform 0.3s ease;
-        }
-        .header-logo:hover {
-            transform: scale(1.1) rotate(360deg);
-        }
-
-        h1 { 
-            margin: 0; 
-            font-size: 28px; 
-            font-weight: 600;
-            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
-        }
-        
-        #connection-status {
-            font-size: 14px;
-            font-weight: 300;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        #connection-status::before {
-            content: '';
-            display: inline-block;
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-            background-color: var(--success-color);
-            animation: pulse 2s infinite;
-        }
-
-        @keyframes pulse {
-            0% { box-shadow: 0 0 0 0 rgba(40, 167, 69, 0.7); }
-            70% { box-shadow: 0 0 0 10px rgba(40, 167, 69, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(40, 167, 69, 0); }
-        }
-
-        .info-panel { 
-            background: var(--surface-color); 
-            padding: 25px; 
-            border-radius: var(--border-radius); 
-            box-shadow: var(--box-shadow); 
-            display: grid; 
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); 
-            gap: 25px; 
-            margin-top: 25px; 
-            margin-bottom: 25px;
-            border: 1px solid #444;
-        }
-
-        .info-card { 
-            padding: 20px; 
-            background: #333; 
-            border-radius: var(--border-radius); 
-            border-left: 5px solid var(--primary-color);
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-            position: relative;
-            overflow: hidden;
-        }
-        .info-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 15px 25px rgba(0,0,0,0.3);
-        }
-
-        .info-label { 
-            font-size: 14px; 
-            color: var(--subtle-text-color); 
-            text-transform: uppercase; 
-            letter-spacing: 1.5px;
-            font-weight: 300;
-        }
-
-        .info-value { 
-            font-size: 22px; 
-            font-weight: 600; 
-            color: var(--text-color); 
-            margin-top: 8px;
-            word-wrap: break-word;
-        }
-
-        #destination-selector {
-            width: 100%;
-            padding: 10px;
-            background-color: #444;
-            color: white;
-            border: 1px solid var(--primary-color);
-            border-radius: 6px;
-            font-family: 'Poppins', sans-serif;
-            font-size: 16px;
-        }
-        
-        #map { 
-            height: 600px; 
-            width: 100%; 
-            border-radius: var(--border-radius); 
-            box-shadow: var(--box-shadow);
-            border: 1px solid #444;
-        }
-
-        .status-active { 
-            color: var(--success-color); 
-            font-weight: bold; 
-        }
-        
-        .status-waiting { 
-            color: var(--warning-color); 
-            font-weight: bold; 
-        }
-
-        .watermark {
-            display: none; /* Hiding the old watermark, can be re-integrated if needed */
-        }
-    </style>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.0/css/all.min.css">
 </head>
 <body>
     <div class="container">
-        <div class="header">
-            <img src="https://pbs.twimg.com/media/CN9dgjuU8AA_QsG.jpg" alt="logo" class="header-logo">
-            <h1>🚌 UTeM Bus Tracker</h1>
-            <div id="connection-status">Live System</div>
-        </div>
-        
-        <div class="info-panel">
-            <div class="info-card"><div class="info-label">Status</div><div class="info-value" id="status"><span class="status-waiting">Waiting...</span></div></div>
-            <div class="info-card"><div class="info-label">Bus ID</div><div class="info-value" id="busId">-</div></div>
-            <div class="info-card"><div class="info-label">Driver's Name</div><div class="info-value" id="driverName">-</div></div>
-            <div class="info-card"><div class="info-label">Last Updated</div><div class="info-value" id="timestamp">-</div></div>
-            <div class="info-card"><div class="info-label">Location</div><div class="info-value" id="coords">-</div></div>
-            <div class="info-card">
-                <div class="info-label">Destination</div>
-                <div class="info-value">
-                    <select id="destination-selector">
-                        <option value="">Select a destination</option>
-                        <option value="terminal_a">Terminal A</option>
-                        <option value="main_library">Main Library</option>
-                        <option value="sports_complex">Sports Complex</option>
-                    </select>
+        <header>
+            <h1><i class="fa-solid fa-bus-simple"></i> UTeM Bus Tracker</h1>
+            <div class="status-indicator">
+                <span id="connection-status">Live System</span>
+                <div class="status-dot connected"></div>
+            </div>
+        </header>
+
+        <div class="main-content">
+            <div class="sidebar">
+                <div class="bus-info">
+                    <h2><i class="fa-solid fa-circle-info"></i> Bus Information</h2>
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <label><i class="fa-solid fa-signal"></i> Status:</label>
+                            <span id="status"><span class="status-waiting">Waiting...</span></span>
+                        </div>
+                        <div class="info-item">
+                            <label><i class="fa-solid fa-id-card"></i> Bus ID:</label>
+                            <span id="busId">-</span>
+                        </div>
+                        <div class="info-item">
+                            <label><i class="fa-solid fa-user"></i> Driver's Name:</label>
+                            <span id="driverName">-</span>
+                        </div>
+                        <div class="info-item">
+                            <label><i class="fa-solid fa-clock"></i> Last Updated:</label>
+                            <span id="timestamp">-</span>
+                        </div>
+                        <div class="info-item">
+                            <label><i class="fa-solid fa-location-arrow"></i> Location:</label>
+                            <span id="coords">-</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="controls">
+                    <button id="center-map-btn"><i class="fa-solid fa-crosshairs"></i> Center on Bus</button>
+                    <button id="follow-bus-btn"><i class="fa-solid fa-location-pin"></i> Follow Bus</button>
+                    <button id="clear-history-btn"><i class="fa-solid fa-trash-can"></i> Clear History</button>
                 </div>
             </div>
-            <div class="info-card"><div class="info-label">ETA</div><div class="info-value" id="eta">-</div></div>
-        </div>
 
-        <div id="map"></div>
+            <div class="map-container">
+                <div id="map"></div>
+            </div>
+        </div>
+        <div class="footer">
+            <p><i class="fa-solid fa-map-location-dot"></i> Bus Location Tracker | Status: <span id="system-status">Initializing...</span></p>
+        </div>
     </div>
 
     <!-- Leaflet JS -->
@@ -227,15 +90,47 @@
         
         let firstUpdate = true;
         let pathCoordinates = [];
+        let followBus = false;
 
-        const destinationSelector = document.getElementById('destination-selector');
+        function showAlert(message, type = 'info') {
+            const existingAlert = document.querySelector('.alert');
+            if (existingAlert) {
+                existingAlert.remove();
+            }
+
+            const alert = document.createElement('div');
+            alert.className = `alert ${type}`;
+            alert.textContent = message;
+
+            document.querySelector('.sidebar').insertBefore(alert, document.querySelector('.sidebar').firstChild);
+
+            setTimeout(() => {
+                if (alert.parentNode) {
+                    alert.remove();
+                }
+            }, 3000);
+        }
+
+        document.getElementById('center-map-btn').addEventListener('click', () => {
+            if (pathCoordinates.length > 0) {
+                map.setView(pathCoordinates[pathCoordinates.length - 1], 16);
+            }
+        });
+
+        document.getElementById('follow-bus-btn').addEventListener('click', function() {
+            followBus = !followBus;
+            this.classList.toggle('active');
+            this.textContent = followBus ? 'Stop Following' : 'Follow Bus';
+        });
+
+        document.getElementById('clear-history-btn').addEventListener('click', () => {
+            pathCoordinates = [];
+            pathLine.setLatLngs([]);
+            showAlert('Location history cleared', 'success');
+        });
 
         function updateLocation() {
-            const selectedDestination = destinationSelector.value;
-            let apiUrl = '/api/bus-location';
-            if (selectedDestination) {
-                apiUrl += `?destination=${selectedDestination}`;
-            }
+            const apiUrl = '/api/bus-location';
 
             fetch(apiUrl)
                 .then(response => response.json())
@@ -252,7 +147,6 @@
                     document.getElementById('driverName').textContent = data.driverName || '-';
                     document.getElementById('timestamp').textContent = data.timestamp;
                     document.getElementById('coords').textContent = `${data.latitude.toFixed(6)}, ${data.longitude.toFixed(6)}`;
-                    document.getElementById('eta').textContent = data.eta || '-';
 
 
                     // Always update map marker
@@ -269,7 +163,7 @@
                         if (firstUpdate) {
                             map.setView(newLatLng, 16); // Zoom in on first data
                             firstUpdate = false;
-                        } else {
+                        } else if (followBus) {
                             map.panTo(newLatLng); // Follow the bus
                         }
                     } else {
@@ -281,7 +175,7 @@
                 })
                 .catch(err => {
                     console.error('Error fetching data:', err);
-                    document.getElementById('eta').textContent = 'Error';
+                    document.getElementById('status').innerHTML = '<span class="status-waiting">Server Error</span>';
                 });
         }
 
