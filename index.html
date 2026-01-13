@@ -18,7 +18,20 @@
     <div class="container">
         <header>
             <img src="LogoJawiUTeM_white-01.png" alt="UTeM Logo" class="logo">
-            <h1><i class="fa-solid fa-bus-simple"></i> UTeM Bus Tracker</h1>
+            <div class="header-content">
+                <div class="header-title">
+                    <i class="fa-solid fa-bus-simple header-icon"></i>
+                    <h1>UTeM Bus Tracker</h1>
+                </div>
+                <p class="header-subtitle">
+                    <i class="fa-solid fa-location-dot"></i> Real-Time Campus Transportation Monitoring
+                </p>
+            </div>
+            <div class="header-decoration">
+                <div class="decoration-circle"></div>
+                <div class="decoration-circle"></div>
+                <div class="decoration-circle"></div>
+            </div>
         </header>
 
         <div class="main-content">
@@ -223,9 +236,9 @@
                     document.getElementById('timestamp').textContent = formatTimestamp(data.timestamp);
                     document.getElementById('coords').textContent = `${data.latitude.toFixed(6)}, ${data.longitude.toFixed(6)}`;
 
-                    // Update location name every 5 minutes (300000 ms)
+                    // Update location name every 1 minute (60000 ms)
                     const now = Date.now();
-                    if (!isDefaultPosition && data.timestamp && (now - lastLocationUpdate > 300000 || lastLocationUpdate === 0)) {
+                    if (!isDefaultPosition && data.timestamp && (now - lastLocationUpdate > 60000 || lastLocationUpdate === 0)) {
                         lastLocationUpdate = now;
                         cachedLocationName = await getLocationName(data.latitude, data.longitude);
                     }
