@@ -17,17 +17,22 @@
 <body>
     <div class="container">
         <header>
+            <img src="LogoJawiUTeM_white-01.png" alt="UTeM Logo" class="logo">
             <h1><i class="fa-solid fa-bus-simple"></i> UTeM Bus Tracker</h1>
-            <div class="status-indicator">
-                <span id="connection-status">Live System</span>
-                <div class="status-dot connected"></div>
-            </div>
         </header>
 
         <div class="main-content">
             <div class="sidebar">
                 <div class="bus-info">
                     <h2><i class="fa-solid fa-circle-info"></i> Bus Information</h2>
+                    <div class="bus-selector">
+                        <label><i class="fa-solid fa-bus"></i> Select Bus:</label>
+                        <select id="busSelect">
+                            <option value="WVJ 4207">WVJ 4207</option>
+                            <option value="MKA 8156">MKA 8156</option>
+                            <option value="JHR 2943">JHR 2943</option>
+                        </select>
+                    </div>
                     <div class="info-grid">
                         <div class="info-item">
                             <label><i class="fa-solid fa-signal"></i> Status:</label>
@@ -48,6 +53,10 @@
                         <div class="info-item">
                             <label><i class="fa-solid fa-location-arrow"></i> Location:</label>
                             <span id="coords">-</span>
+                        </div>
+                        <div class="info-item">
+                            <label><i class="fa-solid fa-map-pin"></i> Place:</label>
+                            <span id="locationName">-</span>
                         </div>
                     </div>
                 </div>
@@ -70,27 +79,81 @@
     <!-- Leaflet JS -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
-        // Initialize map centered on 0,0
-        const map = L.map('map').setView([0, 0], 2);
+        // Initialize map centered on Ayer Keroh, Melaka
+        const map = L.map('map').setView([2.2632, 102.2826], 13);
         L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
             maxZoom: 19,
             attribution: '© OpenStreetMap'
         }).addTo(map);
 
-        // Custom Bus Icon
-        const busIcon = L.icon({
-            iconUrl: 'https://cdn-icons-png.flaticon.com/512/3448/3448339.png',
+        // Custom Bus Icon with rotation
+        const busIcon = L.divIcon({
+            html: '<div class="bus-marker">🚌</div>',
+            className: 'bus-icon-container',
             iconSize: [40, 40],
-            iconAnchor: [20, 20],
-            popupAnchor: [0, -20]
+            iconAnchor: [20, 20]
         });
 
-        const marker = L.marker([0, 0], {icon: busIcon}).addTo(map);
+        const marker = L.marker([2.2632, 102.2826], {icon: busIcon, rotationAngle: 0}).addTo(map);
         const pathLine = L.polyline([], {color: 'var(--primary-color)', weight: 4, opacity: 0.8}).addTo(map);
         
         let firstUpdate = true;
         let pathCoordinates = [];
         let followBus = false;
+        let lastPosition = null;
+        let currentBusId = 'WVJ 4207';
+        let lastLocationUpdate = 0;
+        let cachedLocationName = '-';
+        const DEFAULT_LAT = 2.2632;
+        const DEFAULT_LON = 102.2826;
+
+        function formatTimestamp(timestamp) {
+            if (!timestamp) return '-';
+
+            const date = new Date(timestamp);
+            const day = String(date.getDate()).padStart(2, '0');
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const year = date.getFullYear();
+            const hours = String(date.getHours()).padStart(2, '0');
+            const minutes = String(date.getMinutes()).padStart(2, '0');
+            const seconds = String(date.getSeconds()).padStart(2, '0');
+
+            return `${day}/${month}/${year}, ${hours}:${minutes}:${seconds}`;
+        }
+
+        function calculateBearing(lat1, lon1, lat2, lon2) {
+            const dLon = (lon2 - lon1) * Math.PI / 180;
+            const y = Math.sin(dLon) * Math.cos(lat2 * Math.PI / 180);
+            const x = Math.cos(lat1 * Math.PI / 180) * Math.sin(lat2 * Math.PI / 180) -
+                      Math.sin(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.cos(dLon);
+            return (Math.atan2(y, x) * 180 / Math.PI + 360) % 360;
+        }
+
+        async function getLocationName(lat, lon) {
+            try {
+                const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&zoom=18&addressdetails=1`);
+                const data = await response.json();
+
+                if (data.address) {
+                    const parts = [];
+                    if (data.address.house_number) parts.push(data.address.house_number);
+                    if (data.address.road) parts.push(data.address.road);
+                    if (data.address.neighbourhood) parts.push(data.address.neighbourhood);
+                    if (data.address.suburb) parts.push(data.address.suburb);
+                    if (data.address.city || data.address.town || data.address.village) {
+                        parts.push(data.address.city || data.address.town || data.address.village);
+                    }
+                    if (data.address.state) parts.push(data.address.state);
+                    if (data.address.postcode) parts.push(data.address.postcode);
+
+                    return parts.length > 0 ? parts.join(', ') : data.display_name;
+                }
+                return 'Unknown Location';
+            } catch (error) {
+                console.error('Error fetching location name:', error);
+                return 'Error fetching location';
+            }
+        }
 
         function showAlert(message, type = 'info') {
             const existingAlert = document.querySelector('.alert');
@@ -117,6 +180,16 @@
             }
         });
 
+        document.getElementById('busSelect').addEventListener('change', (e) => {
+            currentBusId = e.target.value;
+            pathCoordinates = [];
+            pathLine.setLatLngs([]);
+            lastPosition = null;
+            lastLocationUpdate = 0;
+            cachedLocationName = '-';
+            updateLocation();
+        });
+
         document.getElementById('follow-bus-btn').addEventListener('click', function() {
             followBus = !followBus;
             this.classList.toggle('active');
@@ -130,52 +203,64 @@
         });
 
         function updateLocation() {
-            const apiUrl = '/api/bus-location';
+            const apiUrl = `/api/bus-location/${currentBusId}`;
 
             fetch(apiUrl)
                 .then(response => response.json())
-                .then(data => {
-                    // Determine status based on coordinates
-                    if (data.latitude !== 0 || data.longitude !== 0) {
-                        document.getElementById('status').innerHTML = '<span class="status-active">Active Tracking</span>';
+                .then(async data => {
+                    const isDefaultPosition = data.latitude === DEFAULT_LAT && data.longitude === DEFAULT_LON;
+
+                    // Determine status from server
+                    if (data.status === 'active') {
+                        document.getElementById('status').innerHTML = '<span class="status-active">active</span>';
                     } else {
-                        document.getElementById('status').innerHTML = '<span class="status-waiting">Waiting for Signal...</span>';
+                        document.getElementById('status').innerHTML = '<span class="status-waiting">waiting</span>';
                     }
-                    
+
                     // Always update text info
                     document.getElementById('busId').textContent = data.busId;
                     document.getElementById('driverName').textContent = data.driverName || '-';
-                    document.getElementById('timestamp').textContent = data.timestamp;
+                    document.getElementById('timestamp').textContent = formatTimestamp(data.timestamp);
                     document.getElementById('coords').textContent = `${data.latitude.toFixed(6)}, ${data.longitude.toFixed(6)}`;
 
+                    // Update location name every 5 minutes (300000 ms)
+                    const now = Date.now();
+                    if (!isDefaultPosition && data.timestamp && (now - lastLocationUpdate > 300000 || lastLocationUpdate === 0)) {
+                        lastLocationUpdate = now;
+                        cachedLocationName = await getLocationName(data.latitude, data.longitude);
+                    }
+                    document.getElementById('locationName').textContent = isDefaultPosition ? '-' : cachedLocationName;
 
                     // Always update map marker
                     const newLatLng = [data.latitude, data.longitude];
                     marker.setLatLng(newLatLng);
                     marker.bindPopup(`<b>${data.busId}</b><br>Driver: ${data.driverName || 'N/A'}`);
-                    
-                    // Only add valid coordinates to the path
-                    if (data.latitude !== 0 || data.longitude !== 0) {
+
+                    // Calculate and apply rotation if we have a previous position
+                    if (lastPosition && !isDefaultPosition && data.timestamp) {
+                        const bearing = calculateBearing(lastPosition[0], lastPosition[1], data.latitude, data.longitude);
+                        const busMarker = document.querySelector('.bus-marker');
+                        if (busMarker) {
+                            busMarker.style.transform = `rotate(${bearing}deg)`;
+                        }
+                    }
+
+                    // Only add valid coordinates to the path (not default position)
+                    if (!isDefaultPosition && data.timestamp) {
+                        lastPosition = [data.latitude, data.longitude];
                         pathCoordinates.push(newLatLng);
                         if (pathCoordinates.length > 1000) pathCoordinates.shift(); // Keep last 1000 points
                         pathLine.setLatLngs(pathCoordinates);
                         
-                        if (firstUpdate) {
-                            map.setView(newLatLng, 16); // Zoom in on first data
-                            firstUpdate = false;
-                        } else if (followBus) {
+                        if (followBus) {
                             map.panTo(newLatLng); // Follow the bus
-                        }
-                    } else {
-                        // If we are at 0,0, reset the view
-                        if (firstUpdate) {
-                            map.setView(newLatLng, 2);
                         }
                     }
                 })
                 .catch(err => {
                     console.error('Error fetching data:', err);
-                    document.getElementById('status').innerHTML = '<span class="status-waiting">Server Error</span>';
+                    document.getElementById('status').innerHTML = '<span class="status-waiting">waiting</span>';
+                    document.getElementById('system-status').textContent = 'Server Error';
                 });
         }
 

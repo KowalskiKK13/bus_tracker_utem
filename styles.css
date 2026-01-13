@@ -24,39 +24,27 @@ header {
     color: white;
     padding: 1rem;
     display: flex;
-    justify-content: space-between;
+    justify-content: center;
     align-items: center;
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    position: relative;
+}
+
+.logo {
+    position: absolute;
+    top: 2px;
+    left: 10px;
+    height: 100px;
 }
 
 header h1 {
     font-size: 1.8rem;
     font-weight: 600;
+    text-align: center;
+    flex-grow: 1;
 }
 
-.status-indicator {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-}
 
-.status-dot {
-    width: 12px;
-    height: 12px;
-    border-radius: 50%;
-    background-color: #ff4444;
-    animation: pulse 2s infinite;
-}
-
-.status-dot.connected {
-    background-color: #44ff44;
-}
-
-@keyframes pulse {
-    0% { opacity: 1; }
-    50% { opacity: 0.5; }
-    100% { opacity: 1; }
-}
 
 .main-content {
     display: flex;
@@ -82,6 +70,38 @@ header h1 {
     margin-bottom: 1rem;
     color: #333;
     font-size: 1.2rem;
+}
+
+.bus-selector {
+    margin-bottom: 1rem;
+    padding: 0.8rem;
+    background: #f8f9fa;
+    border-radius: 6px;
+}
+
+.bus-selector label {
+    display: block;
+    font-weight: 600;
+    color: #666;
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+}
+
+.bus-selector select {
+    width: 100%;
+    padding: 0.6rem;
+    border: 2px solid #ddd;
+    border-radius: 6px;
+    font-size: 1rem;
+    font-weight: 600;
+    background: white;
+    cursor: pointer;
+    transition: border-color 0.2s;
+}
+
+.bus-selector select:focus {
+    outline: none;
+    border-color: #667eea;
 }
 
 .info-grid {
@@ -269,31 +289,7 @@ button.active {
 
 
 
-.header-logo {
 
-
-
-    position: absolute;
-
-
-
-    top: 10px;
-
-
-
-    right: 10px;
-
-
-
-    height: 50px;
-
-
-
-    z-index: 1001;
-
-
-
-}
 
 .watermark {
     position: fixed;
@@ -302,4 +298,27 @@ button.active {
     height: 50px;
     opacity: 0.5;
     z-index: 1000;
+}
+
+.bus-icon-container {
+    background: transparent !important;
+    border: none !important;
+}
+
+.bus-marker {
+    font-size: 32px;
+    transition: transform 0.5s ease-out;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.status-active {
+    color: #28a745;
+    font-weight: bold;
+}
+
+.status-waiting {
+    color: #ffc107;
+    font-weight: bold;
 }

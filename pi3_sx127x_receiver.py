@@ -63,7 +63,7 @@ class LoRaReceiver(LoRa):
 
             # Default structure
             gps_data = {
-                'busId': 'BUS001',
+                'busId': 'WVJ 4207',
                 'latitude': 0.0,
                 'longitude': 0.0,
                 'signalStrength': 85,
@@ -131,7 +131,7 @@ class LoRaReceiver(LoRa):
         print("Testing server connection...")
 
         test_data = {
-            'busId': 'TEST001',
+            'busId': 'WVJ 4207',
             'latitude': 40.7128,
             'longitude': -74.0060,
             'signalStrength': 100,

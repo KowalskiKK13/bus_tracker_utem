@@ -6,32 +6,82 @@ const port = 3000;
 // Middleware to parse JSON bodies from the Python script
 app.use(express.json());
 
-// Serve static files (HTML, CSS, JS) from a 'public' folder
-app.use(express.static('public'));
+// Serve static files (HTML, CSS, JS) from the current folder
+app.use(express.static('.'));
 
-// Variable to store the latest bus location
-let latestBusData = {
-    busId: 'Waiting...',
-    latitude: 0,
-    longitude: 0,
-    signalStrength: 0,
-    timestamp: null
+// Multiple buses data
+let busesData = {
+    'WVJ 4207': {
+        busId: 'WVJ 4207',
+        driverName: 'Ahmad Bin Ali',
+        latitude: 2.2632,
+        longitude: 102.2826,
+        signalStrength: 0,
+        timestamp: null,
+        status: 'waiting'
+    },
+    'MKA 8156': {
+        busId: 'MKA 8156',
+        driverName: 'Siti Nurhaliza',
+        latitude: 2.2632,
+        longitude: 102.2826,
+        signalStrength: 0,
+        timestamp: null,
+        status: 'waiting'
+    },
+    'JHR 2943': {
+        busId: 'JHR 2943',
+        driverName: 'Kumar A/L Rajan',
+        latitude: 2.2632,
+        longitude: 102.2826,
+        signalStrength: 0,
+        timestamp: null,
+        status: 'waiting'
+    }
 };
 
-// Endpoint for the Raspberry Pi to send data to
+// Endpoint for the Raspberry Pi to send data to (defaults to WVJ 4207)
 app.post('/api/bus-location', (req, res) => {
     const data = req.body;
+    const busId = data.busId || 'WVJ 4207';
     console.log('Received GPS data:', data);
-    
-    // Update the stored data
-    latestBusData = data;
-    
+
+    // Add timestamp if not provided
+    if (!data.timestamp) {
+        data.timestamp = new Date().toISOString();
+    }
+
+    // Create or update bus data
+    if (!busesData[busId]) {
+        busesData[busId] = {
+            busId: busId,
+            driverName: 'Unknown Driver',
+            latitude: 2.2632,
+            longitude: 102.2826,
+            signalStrength: 0,
+            timestamp: null,
+            status: 'waiting'
+        };
+    }
+
+    Object.assign(busesData[busId], data, { status: 'active' });
+
     res.status(200).json({ message: 'Data received successfully' });
 });
 
-// Endpoint for the webpage to get the latest data
-app.get('/api/bus-location', (req, res) => {
-    res.json(latestBusData);
+// Get all buses
+app.get('/api/buses', (req, res) => {
+    res.json(Object.values(busesData));
+});
+
+// Get specific bus data
+app.get('/api/bus-location/:busId', (req, res) => {
+    const bus = busesData[req.params.busId];
+    if (bus) {
+        res.json(bus);
+    } else {
+        res.status(404).json({ error: 'Bus not found' });
+    }
 });
 
 // Serve index.html from the main folder if not found in 'public'

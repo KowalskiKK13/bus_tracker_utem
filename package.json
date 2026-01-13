@@ -10,7 +10,6 @@
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
-    "claude": "^0.1.1",
     "express": "^4.18.2",
     "ws": "^8.14.2"
   },
